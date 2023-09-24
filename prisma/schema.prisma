@@ -39,7 +39,7 @@ model User {
   phone                   String?
   password                String
   user_type               UserType
-  user_status             UserStatus
+  user_status             UserStatus @default(UNVERIFIED)
   joined_date             DateTime   @default(now())
   updated_at              DateTime   @updatedAt
   homes                   Home[]
