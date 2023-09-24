@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateHomeDto } from '../dtos/home.dto';
 
 @Injectable()
 export class HomeService {
@@ -12,8 +13,9 @@ export class HomeService {
     return await this.prismaService.home.findMany();
   }
 
-  createHome(body: any) {
-    return 'created home';
+  async createHome(body: CreateHomeDto) {
+    // return await this.prismaService.home.create({ data: { ...body } });
+    return body;
   }
 
   updateHome(body: any) {

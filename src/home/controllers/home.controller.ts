@@ -9,6 +9,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { HomeService } from '../data-access/home.service';
+import { CreateHomeDto } from '../dtos/home.dto';
 
 @Controller('v1/home')
 export class HomeController {
@@ -25,8 +26,8 @@ export class HomeController {
   }
 
   @Post()
-  createHome(@Body() body: any) {
-    return this.homeService.createHome(body);
+  async createHome(@Body() body: CreateHomeDto) {
+    return await this.homeService.createHome(body);
   }
 
   @Patch(':id')
