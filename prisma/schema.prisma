@@ -16,9 +16,9 @@ model Home {
   land_size               Float
   price                   Float
   property_type           PropertyType
-  realtor_id              Int
   listed_date             DateTime     @default(now())
   updated_at              DateTime     @updatedAt
+  realtor_id              Int
   user                    User         @relation(fields: [realtor_id], references: [id])
   images                  Image[]
   messages                Message[]
