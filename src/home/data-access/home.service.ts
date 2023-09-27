@@ -1,26 +1,140 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import {
+  CreateHomeDto,
+  CreateImageDto,
+  HomeResponseDto,
+  UpdateHomeDto,
+} from '../dtos/home.dto';
+import { HomeQueryInterface } from './home.types';
 
 @Injectable()
 export class HomeService {
   constructor(private readonly prismaService: PrismaService) {}
-  getHome(id: number) {
-    return 'home';
+  async getHome(id: number) {
+    try {
+      const home = await this.prismaService.home.findUniqueOrThrow({
+        where: { id },
+        include: {
+          images: {
+            select: {
+              url: true,
+            },
+          },
+        },
+      });
+      return new HomeResponseDto(home);
+    } catch (error) {
+      throw new NotFoundException('Home not found');
+    }
   }
 
-  async getHomes() {
-    return await this.prismaService.home.findMany();
+  async getHomes(query?: HomeQueryInterface): Promise<HomeResponseDto[]> {
+    const price =
+      query.minPrice || query.maxPrice
+        ? {
+            ...(query.minPrice && { gte: +query.minPrice }),
+            ...(query.maxPrice && { lte: +query.maxPrice }),
+          }
+        : undefined;
+    const filter = {
+      ...(query.city && { city: query.city }),
+      ...(price && { price }),
+      ...(query.propertyType && { property_type: query.propertyType }),
+    };
+    return (
+      await this.prismaService.home.findMany({
+        include: { images: { select: { url: true } } },
+        where: filter,
+      })
+    ).map((home) => new HomeResponseDto(home));
   }
 
-  createHome(body: any) {
-    return 'created home';
+  async createHome(body: CreateHomeDto) {
+    let payload: any;
+    // Check if posts should be included in the query
+    if (body?.images?.length) {
+      payload = {
+        ...body,
+        images: {
+          create: body.images,
+        },
+      };
+    } else {
+      payload = {
+        ...body,
+      };
+    }
+    return await this.prismaService.home.create({
+      data: { ...payload },
+      include: { images: true },
+    });
   }
 
-  updateHome(body: any) {
-    return 'updated home';
+  async updateHome(id: number, body: UpdateHomeDto) {
+    try {
+      const updatedHome = await this.prismaService.home.update({
+        where: { id },
+        data: { ...body },
+      });
+
+      return new HomeResponseDto(updatedHome);
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException();
+      }
+      throw new BadRequestException();
+    }
   }
 
-  deleteHome(id: number) {
-    return 'deleted home';
+  async updateHomeImage(id: number, body: CreateImageDto[]) {
+    try {
+      const updatedHome = await this.prismaService.home.update({
+        where: { id },
+        data: {
+          images: {
+            create: body,
+          },
+        },
+        include: {
+          images: {
+            select: {
+              url: true,
+            },
+          },
+        },
+      });
+      return new HomeResponseDto(updatedHome);
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException();
+      }
+      throw new BadRequestException();
+    }
+  }
+
+  async deleteHomeImage(id: number, imageId: number) {
+    try {
+      const image = await this.prismaService.image.delete({
+        where: { id: imageId, home_id: id },
+      });
+
+      return { message: `Home with id: ${image.id} has been deleted` };
+    } catch (error) {
+      throw new NotFoundException();
+    }
+  }
+
+  async deleteHome(id: number) {
+    try {
+      const home = await this.prismaService.home.delete({ where: { id } });
+      return { message: `Home with id: ${home.id} has been deleted` };
+    } catch (error) {
+      throw new NotFoundException();
+    }
   }
 }
