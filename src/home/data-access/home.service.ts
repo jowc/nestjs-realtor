@@ -31,7 +31,6 @@ export class HomeService {
       ...(price && { price }),
       ...(query.propertyType && { property_type: query.propertyType }),
     };
-    console.log(filter);
     return (
       await this.prismaService.home.findMany({
         include: { images: { select: { url: true } } },
@@ -41,8 +40,24 @@ export class HomeService {
   }
 
   async createHome(body: CreateHomeDto) {
-    // return await this.prismaService.home.create({ data: { ...body } });
-    return body;
+    let payload: any;
+    // Check if posts should be included in the query
+    if (body?.images?.length) {
+      payload = {
+        ...body,
+        images: {
+          create: body.images,
+        },
+      };
+    } else {
+      payload = {
+        ...body,
+      };
+    }
+    return await this.prismaService.home.create({
+      data: { ...payload },
+      include: { images: true },
+    });
   }
 
   async updateHome(id: number, body: any) {
@@ -56,7 +71,11 @@ export class HomeService {
     }
   }
 
-  deleteHome(id: number) {
-    return 'deleted home';
+  async deleteHome(id: number) {
+    try {
+      return await this.prismaService.home.delete({ where: { id } });
+    } catch (error) {
+      throw error;
+    }
   }
 }

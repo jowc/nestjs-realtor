@@ -1,6 +1,7 @@
-import { PropertyType } from '@prisma/client';
-import { Exclude, Expose } from 'class-transformer';
+import { Image, PropertyType } from '@prisma/client';
+import { Exclude, Expose, Type } from 'class-transformer';
 import {
+  IsArray,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -8,6 +9,7 @@ import {
   IsString,
   MaxLength,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
 
 export class CreateHomeDto {
@@ -29,7 +31,7 @@ export class CreateHomeDto {
   @MinLength(2)
   @MaxLength(255)
   @IsOptional()
-  city?: string;
+  city: string;
 
   @IsNumber()
   @IsOptional()
@@ -46,6 +48,25 @@ export class CreateHomeDto {
   @IsNumber()
   @IsNotEmpty()
   realtor_id: number;
+
+  @IsOptional()
+  @IsNotEmpty()
+  user: unknown;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateImageDto)
+  images?: CreateImageDto[];
+}
+
+export class CreateImageDto {
+  @IsString()
+  url: string;
+
+  @IsOptional()
+  @IsNumber()
+  home_id?: number;
 }
 
 export class HomeResponseDto {
@@ -104,4 +125,48 @@ export class HomeResponseDto {
 
   @Exclude()
   updated_at: Date;
+}
+
+export class UpdateHomeDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(5)
+  @MaxLength(255)
+  @IsNotEmpty()
+  address: string;
+
+  @IsOptional()
+  @IsNumber()
+  @IsNotEmpty()
+  number_of_bedrooms: number;
+
+  @IsOptional()
+  @IsNumber()
+  @IsNotEmpty()
+  number_of_bathrooms: number;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(2)
+  @MaxLength(255)
+  city: string;
+
+  @IsOptional()
+  @IsNumber()
+  land_size?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @IsNotEmpty()
+  price: number;
+
+  @IsOptional()
+  @IsEnum(PropertyType)
+  @IsNotEmpty()
+  property_type: PropertyType;
+
+  @IsOptional()
+  @IsNumber()
+  @IsNotEmpty()
+  realtor_id: number;
 }
