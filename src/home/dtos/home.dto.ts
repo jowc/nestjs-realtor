@@ -125,6 +125,8 @@ export class HomeResponseDto {
 
   @Exclude()
   updated_at: Date;
+
+  images?: CreateImageDto[];
 }
 
 export class UpdateHomeDto {

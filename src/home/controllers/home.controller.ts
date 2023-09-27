@@ -10,7 +10,12 @@ import {
   Query,
 } from '@nestjs/common';
 import { HomeService } from '../data-access/home.service';
-import { CreateHomeDto, HomeResponseDto } from '../dtos/home.dto';
+import {
+  CreateHomeDto,
+  CreateImageDto,
+  HomeResponseDto,
+  UpdateHomeDto,
+} from '../dtos/home.dto';
 import { HomeQueryInterface } from '../data-access/home.types';
 
 @Controller('v1/home')
@@ -25,8 +30,8 @@ export class HomeController {
   }
 
   @Get(':id')
-  getHome(@Param('id', ParseIntPipe) id: number) {
-    return this.homeService.getHome(id);
+  async getHome(@Param('id', ParseIntPipe) id: number) {
+    return await this.homeService.getHome(id);
   }
 
   @Post()
@@ -35,15 +40,30 @@ export class HomeController {
   }
 
   @Patch(':id')
-  updateHome(
+  async updateHome(
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: CreateHomeDto,
+    @Body() body: UpdateHomeDto,
   ) {
-    return this.homeService.updateHome(id, body);
+    return await this.homeService.updateHome(id, body);
   }
 
+  @Patch(':id/image')
+  async updateHomeImage(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: CreateImageDto[],
+  ) {
+    return await this.homeService.updateHomeImage(id, body);
+  }
+
+  @Delete(':id/image')
+  async deleteHomeImage(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('imageId') imageId: number,
+  ) {
+    return await this.homeService.deleteHomeImage(id, imageId);
+  }
   @Delete(':id')
-  deleteHome(@Param('id', ParseIntPipe) id: number) {
-    return this.homeService.deleteHome(id);
+  async deleteHome(@Param('id', ParseIntPipe) id: number) {
+    return await this.homeService.deleteHome(id);
   }
 }

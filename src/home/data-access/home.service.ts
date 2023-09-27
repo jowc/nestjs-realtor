@@ -4,7 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateHomeDto, HomeResponseDto } from '../dtos/home.dto';
+import {
+  CreateHomeDto,
+  CreateImageDto,
+  HomeResponseDto,
+  UpdateHomeDto,
+} from '../dtos/home.dto';
 import { HomeQueryInterface } from './home.types';
 
 @Injectable()
@@ -12,7 +17,17 @@ export class HomeService {
   constructor(private readonly prismaService: PrismaService) {}
   async getHome(id: number) {
     try {
-      return await this.prismaService.home.findUniqueOrThrow({ where: { id } });
+      const home = await this.prismaService.home.findUniqueOrThrow({
+        where: { id },
+        include: {
+          images: {
+            select: {
+              url: true,
+            },
+          },
+        },
+      });
+      return new HomeResponseDto(home);
     } catch (error) {
       throw new NotFoundException('Home not found');
     }
@@ -60,22 +75,66 @@ export class HomeService {
     });
   }
 
-  async updateHome(id: number, body: any) {
+  async updateHome(id: number, body: UpdateHomeDto) {
     try {
-      return await this.prismaService.home.update({
+      const updatedHome = await this.prismaService.home.update({
         where: { id },
         data: { ...body },
       });
+
+      return new HomeResponseDto(updatedHome);
     } catch (error) {
-      throw new BadRequestException(error);
+      if (error.code === 'P2025') {
+        throw new NotFoundException();
+      }
+      throw new BadRequestException();
+    }
+  }
+
+  async updateHomeImage(id: number, body: CreateImageDto[]) {
+    try {
+      const updatedHome = await this.prismaService.home.update({
+        where: { id },
+        data: {
+          images: {
+            create: body,
+          },
+        },
+        include: {
+          images: {
+            select: {
+              url: true,
+            },
+          },
+        },
+      });
+      return new HomeResponseDto(updatedHome);
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException();
+      }
+      throw new BadRequestException();
+    }
+  }
+
+  async deleteHomeImage(id: number, imageId: number) {
+    try {
+      const image = await this.prismaService.image.delete({
+        where: { id: imageId, home_id: id },
+      });
+
+      return { message: `Home with id: ${image.id} has been deleted` };
+    } catch (error) {
+      throw new NotFoundException();
     }
   }
 
   async deleteHome(id: number) {
     try {
-      return await this.prismaService.home.delete({ where: { id } });
+      const home = await this.prismaService.home.delete({ where: { id } });
+      return { message: `Home with id: ${home.id} has been deleted` };
     } catch (error) {
-      throw error;
+      throw new NotFoundException();
     }
   }
 }
