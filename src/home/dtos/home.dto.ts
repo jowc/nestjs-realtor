@@ -45,10 +45,6 @@ export class CreateHomeDto {
   @IsNotEmpty()
   property_type: PropertyType;
 
-  @IsNumber()
-  @IsNotEmpty()
-  realtor_id: number;
-
   @IsOptional()
   @IsNotEmpty()
   user: unknown;

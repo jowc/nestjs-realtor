@@ -48,8 +48,8 @@ export class HomeService {
     };
     return (
       await this.prismaService.home.findMany({
-        include: { images: { select: { url: true } } },
         where: filter,
+        include: { images: { select: { url: true } } },
       })
     ).map((home) => new HomeResponseDto(home));
   }
@@ -69,10 +69,12 @@ export class HomeService {
         ...body,
       };
     }
-    return await this.prismaService.home.create({
+    const home = await this.prismaService.home.create({
       data: { ...payload },
-      include: { images: true },
+      include: { images: { select: { url: true } } },
     });
+
+    return new HomeResponseDto(home);
   }
 
   async updateHome(id: number, body: UpdateHomeDto) {

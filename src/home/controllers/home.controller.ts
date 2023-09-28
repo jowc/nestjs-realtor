@@ -17,10 +17,18 @@ import {
   UpdateHomeDto,
 } from '../dtos/home.dto';
 import { HomeQueryInterface } from '../data-access/home.types';
+import { User } from 'src/user/decorator/user.decorator';
+import { Roles } from 'src/user/decorator/roles.decorator';
+import { UserType } from '@prisma/client';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { JwtUserInterface } from 'src/user/types/user.types';
 
 @Controller('v1/home')
 export class HomeController {
-  constructor(private readonly homeService: HomeService) {}
+  constructor(
+    private readonly homeService: HomeService,
+    private readonly prismaService: PrismaService,
+  ) {}
 
   @Get()
   async getHomes(
@@ -34,9 +42,17 @@ export class HomeController {
     return await this.homeService.getHome(id);
   }
 
+  @Roles(UserType.REALTOR, UserType.ADMIN)
   @Post()
-  async createHome(@Body() body: CreateHomeDto) {
-    return await this.homeService.createHome(body);
+  async createHome(
+    @Body() body: CreateHomeDto,
+    @User() user: JwtUserInterface,
+  ) {
+    const realtor = await this.prismaService.user.findUnique({
+      where: { id: user.sub },
+    });
+    const updatedBody = { ...body, realtor_id: realtor.id };
+    return await this.homeService.createHome(updatedBody);
   }
 
   @Patch(':id')
