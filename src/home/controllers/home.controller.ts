@@ -8,6 +8,8 @@ import {
   Patch,
   Post,
   Query,
+  UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { HomeService } from '../data-access/home.service';
 import {
@@ -22,6 +24,7 @@ import { Roles } from 'src/user/decorator/roles.decorator';
 import { UserType } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtUserInterface } from 'src/user/types/user.types';
+import { AuthGuard } from 'src/user/auth/guards/auth.guard';
 
 @Controller('v1/home')
 export class HomeController {
@@ -30,6 +33,7 @@ export class HomeController {
     private readonly prismaService: PrismaService,
   ) {}
 
+  @Roles(UserType.BUYER)
   @Get()
   async getHomes(
     @Query() query: HomeQueryInterface,
@@ -59,7 +63,13 @@ export class HomeController {
   async updateHome(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: UpdateHomeDto,
+    @User() user: JwtUserInterface,
   ) {
+    const realtorMatch = await this.homeService.getExactRealtorHome(
+      id,
+      user.sub,
+    );
+    if (!realtorMatch) throw new UnauthorizedException();
     return await this.homeService.updateHome(id, body);
   }
 
@@ -67,7 +77,13 @@ export class HomeController {
   async updateHomeImage(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: CreateImageDto[],
+    @User() user: JwtUserInterface,
   ) {
+    const realtorMatch = await this.homeService.getExactRealtorHome(
+      id,
+      user.sub,
+    );
+    if (!realtorMatch) throw new UnauthorizedException();
     return await this.homeService.updateHomeImage(id, body);
   }
 
@@ -75,11 +91,26 @@ export class HomeController {
   async deleteHomeImage(
     @Param('id', ParseIntPipe) id: number,
     @Body('imageId') imageId: number,
+    @User() user: JwtUserInterface,
   ) {
+    const realtorMatch = await this.homeService.getExactRealtorHome(
+      id,
+      user.sub,
+    );
+    if (!realtorMatch) throw new UnauthorizedException();
     return await this.homeService.deleteHomeImage(id, imageId);
   }
+
   @Delete(':id')
-  async deleteHome(@Param('id', ParseIntPipe) id: number) {
+  async deleteHome(
+    @Param('id', ParseIntPipe) id: number,
+    @User() user: JwtUserInterface,
+  ) {
+    const realtorMatch = await this.homeService.getExactRealtorHome(
+      id,
+      user.sub,
+    );
+    if (!realtorMatch) throw new UnauthorizedException();
     return await this.homeService.deleteHome(id);
   }
 }

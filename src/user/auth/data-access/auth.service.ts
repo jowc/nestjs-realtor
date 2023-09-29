@@ -58,6 +58,16 @@ export class AuthService {
     });
   }
 
+  async findUserByIdorNull(id: number) {
+    return await this.prismaService.user.findUnique({
+      where: { id },
+    });
+  }
+
+  getHeaderToken(req: any) {
+    return req?.headers?.authorization?.split('Bearer ')[1] as string;
+  }
+
   getKey(email: string, userType: UserType) {
     return `${email}-${userType}-${process.env.PRODUCT_KEY_SECRET}`;
   }

@@ -139,4 +139,13 @@ export class HomeService {
       throw new NotFoundException();
     }
   }
+
+  async getExactRealtorHome(id: number, realtor_id: number) {
+    return this.prismaService.home.findUnique({
+      where: {
+        id,
+        realtor_id,
+      },
+    });
+  }
 }

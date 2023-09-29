@@ -8,6 +8,7 @@ import {
   ParseEnumPipe,
   Post,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from '../data-access/auth.service';
 import { UserType } from '@prisma/client';
@@ -18,6 +19,9 @@ import {
 } from '../dtos/auth.dto';
 
 import * as bcrypt from 'bcryptjs';
+import { User } from 'src/user/decorator/user.decorator';
+import { JwtUserInterface } from 'src/user/types/user.types';
+import { AuthGuard } from '../guards/auth.guard';
 
 @Controller('v1/auth')
 export class AuthController {
@@ -50,5 +54,12 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   generateProductKey(@Body() { email, userType }: GenerateProductKeyDto) {
     return this.authService.generateProductKey(email, userType);
+  }
+
+  @Get('me')
+  async userDetails(@User() user: JwtUserInterface) {
+    const foundUser = await this.authService.findUserByIdorNull(user?.sub);
+    if (!foundUser) throw new UnauthorizedException();
+    return foundUser;
   }
 }
