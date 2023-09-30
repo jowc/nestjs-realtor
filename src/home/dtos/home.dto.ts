@@ -45,10 +45,6 @@ export class CreateHomeDto {
   @IsNotEmpty()
   property_type: PropertyType;
 
-  @IsNumber()
-  @IsNotEmpty()
-  realtor_id: number;
-
   @IsOptional()
   @IsNotEmpty()
   user: unknown;
@@ -171,4 +167,10 @@ export class UpdateHomeDto {
   @IsNumber()
   @IsNotEmpty()
   realtor_id: number;
+}
+
+export class InquireHomeDto {
+  @IsString()
+  @IsNotEmpty()
+  message: string;
 }

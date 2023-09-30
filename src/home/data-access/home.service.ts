@@ -8,6 +8,7 @@ import {
   CreateHomeDto,
   CreateImageDto,
   HomeResponseDto,
+  InquireHomeDto,
   UpdateHomeDto,
 } from '../dtos/home.dto';
 import { HomeQueryInterface } from './home.types';
@@ -48,8 +49,8 @@ export class HomeService {
     };
     return (
       await this.prismaService.home.findMany({
-        include: { images: { select: { url: true } } },
         where: filter,
+        include: { images: { select: { url: true } } },
       })
     ).map((home) => new HomeResponseDto(home));
   }
@@ -69,10 +70,12 @@ export class HomeService {
         ...body,
       };
     }
-    return await this.prismaService.home.create({
+    const home = await this.prismaService.home.create({
       data: { ...payload },
-      include: { images: true },
+      include: { images: { select: { url: true } } },
     });
+
+    return new HomeResponseDto(home);
   }
 
   async updateHome(id: number, body: UpdateHomeDto) {
@@ -136,5 +139,28 @@ export class HomeService {
     } catch (error) {
       throw new NotFoundException();
     }
+  }
+
+  async getExactRealtorHome(id: number, realtor_id: number) {
+    return this.prismaService.home.findUnique({
+      where: {
+        id,
+        realtor_id,
+      },
+    });
+  }
+
+  async inquireHome(home_id: number, buyer_id: number, body: InquireHomeDto) {
+    const home = await this.getHome(home_id);
+    const updatedBody = {
+      ...body,
+      buyer_id,
+      realtor_id: home.realtor_id,
+      home_id: home.id,
+    };
+    const message = await this.prismaService.message.create({
+      data: updatedBody,
+    });
+    return message;
   }
 }
