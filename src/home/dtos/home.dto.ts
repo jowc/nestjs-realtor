@@ -168,3 +168,9 @@ export class UpdateHomeDto {
   @IsNotEmpty()
   realtor_id: number;
 }
+
+export class InquireHomeDto {
+  @IsString()
+  @IsNotEmpty()
+  message: string;
+}

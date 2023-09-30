@@ -12,12 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { HomeService } from '../data-access/home.service';
-import {
-  CreateHomeDto,
-  CreateImageDto,
-  HomeResponseDto,
-  UpdateHomeDto,
-} from '../dtos/home.dto';
+import * as homeDto from '../dtos/home.dto';
 import { HomeQueryInterface } from '../data-access/home.types';
 import { User } from 'src/user/decorator/user.decorator';
 import { Roles } from 'src/user/decorator/roles.decorator';
@@ -37,7 +32,7 @@ export class HomeController {
   @Get()
   async getHomes(
     @Query() query: HomeQueryInterface,
-  ): Promise<HomeResponseDto[]> {
+  ): Promise<homeDto.HomeResponseDto[]> {
     return await this.homeService.getHomes(query);
   }
 
@@ -49,7 +44,7 @@ export class HomeController {
   @Roles(UserType.REALTOR, UserType.ADMIN)
   @Post()
   async createHome(
-    @Body() body: CreateHomeDto,
+    @Body() body: homeDto.CreateHomeDto,
     @User() user: JwtUserInterface,
   ) {
     const realtor = await this.prismaService.user.findUnique({
@@ -62,7 +57,7 @@ export class HomeController {
   @Patch(':id')
   async updateHome(
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: UpdateHomeDto,
+    @Body() body: homeDto.UpdateHomeDto,
     @User() user: JwtUserInterface,
   ) {
     const realtorMatch = await this.homeService.getExactRealtorHome(
@@ -76,7 +71,7 @@ export class HomeController {
   @Patch(':id/image')
   async updateHomeImage(
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: CreateImageDto[],
+    @Body() body: homeDto.CreateImageDto[],
     @User() user: JwtUserInterface,
   ) {
     const realtorMatch = await this.homeService.getExactRealtorHome(
@@ -112,5 +107,15 @@ export class HomeController {
     );
     if (!realtorMatch) throw new UnauthorizedException();
     return await this.homeService.deleteHome(id);
+  }
+
+  @Roles(UserType.BUYER)
+  @Post(':id/inquire')
+  async inquire(
+    @Param('id') home_id: number,
+    @User() user: JwtUserInterface,
+    @Body() body: homeDto.InquireHomeDto,
+  ) {
+    return await this.homeService.inquireHome(home_id, user.sub, body);
   }
 }

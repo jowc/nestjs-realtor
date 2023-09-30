@@ -8,6 +8,7 @@ import {
   CreateHomeDto,
   CreateImageDto,
   HomeResponseDto,
+  InquireHomeDto,
   UpdateHomeDto,
 } from '../dtos/home.dto';
 import { HomeQueryInterface } from './home.types';
@@ -147,5 +148,19 @@ export class HomeService {
         realtor_id,
       },
     });
+  }
+
+  async inquireHome(home_id: number, buyer_id: number, body: InquireHomeDto) {
+    const home = await this.getHome(home_id);
+    const updatedBody = {
+      ...body,
+      buyer_id,
+      realtor_id: home.realtor_id,
+      home_id: home.id,
+    };
+    const message = await this.prismaService.message.create({
+      data: updatedBody,
+    });
+    return message;
   }
 }
